@@ -1,0 +1,87 @@
+import cv2
+import sys
+import qrcode
+import binascii
+import struct
+import numpy
+import os
+
+block = 20
+
+
+# display qr code
+def display_qrc(data):
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+    img = qr.make_image()
+
+    pil_image = img.convert('RGB')
+    open_cv_image = numpy.array(pil_image)
+    # Convert RGB to BGR
+    open_cv_image = open_cv_image[:, :, ::-1].copy()
+
+    cv2.imshow("cv2", open_cv_image)
+
+
+def process(file, pos):
+    cv2.namedWindow("cv2", cv2.WINDOW_NORMAL)
+    
+    cv2.waitKey(5000)
+
+    with open(file, "rb") as f:
+        f.seek(block * (pos - 1))
+        byte = f.read(block)
+        # i start from 1
+        i = pos
+        cur_size = block * pos
+
+        while byte != b"":
+            # byte = bytes(i.to_bytes(10, "big") + bytearray(byte))
+            byte = bytes(struct.pack("i", i) + bytearray(byte))
+            display_qrc(binascii.b2a_hex(byte))
+
+            # fix decimal issue under python2
+            ratio = float(cur_size)/float(os.path.getsize(file))
+            if ratio > 1:
+                ratio = 1
+
+            print("seq: %s, ratio: %.2f" % (i, ratio))
+            k = cv2.waitKey(2000)
+
+            if k % 256 == 27:
+                # ESC pressed
+                print("Escape hit, closing...")
+                # break
+                sys.exit()
+
+            byte = f.read(block)
+            i += 1
+            cur_size += block
+
+    cv2.waitKey(5000)
+    # ask confirmation before displaying termination data
+    while True:
+        # for python2
+        # ans = raw_nput("last package. display termination data?")
+        ans = input("last package. display termination data?")
+        if ans not in ['y', 'Y', 'n', 'N']:
+            print("please enter y or n.")
+            continue
+        if ans == 'y' or ans == 'Y':
+            display_qrc(binascii.b2a_hex(bytes(struct.pack("i", 0))))
+            break
+        if ans == 'n' or ans == 'N':
+            break
+
+    cv2.waitKey(5000)
+    cv2.destroyAllWindows()
+
+
+if __name__ == '__main__':
+    process(sys.argv[1], int(sys.argv[2]))
