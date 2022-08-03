@@ -1,87 +1,76 @@
-import cv2
-import sys
-import qrcode
-import binascii
-import struct
-import numpy
-import os
+# Tongjie Zhang
++86 156.0189.5805 | <tong.jie.zhang@hsbc.com.hk>
+### Education
+---
+##### University of Dayton (Dayton, Ohio)
+  * Master in Computer Science, <ins>2012-2014</ins>
+##### Qingdao Technological University (China)
+  * Bachelor in MIS (Management Information Systems), <ins>2008 – 2012</ins>
 
-block = 20
+### Work Experience
+---
+##### Infosys Limited - Systems Engineer, <ins>2014.12 – 2017.7</ins> (Newark, CA)
+  * Designed and implemented a web interface for backend database in C# and jQuery/JavaScript
+  * Created python scripts with Robot Framework, Sikuli and Selenium to test existing software
+  * Front end web development
 
+##### Chiwen Information Technology Co. Ltd. – DevOps Engineer, <ins>2017.8 – 2017.12</ins> (Shanghai, China)
+  * Developed an automated platform which can be used to collect server/application logs, track hardware status and deploy java applications automatically
+  * Created custom Nginx security modules with lua and redis
+  * Designed IT infrastructure with teammates and troubleshot Linux application issues
 
-# display qr code
-def display_qrc(data):
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data(data)
-    qr.make(fit=True)
-    img = qr.make_image()
+##### HSBC (<ins>GBM Tooling Team</ins>) – Developer/Tooling Engineer, <ins>2018.9 – current</ins> (Guangzhou, China)
+  * Created internal tools with Java/Clojure/Python/Node and setup infrastructure used by developers
+  * Tech support for internal IT infrastructure and systems
+  * Linux systems administration
 
-    pil_image = img.convert('RGB')
-    open_cv_image = numpy.array(pil_image)
-    # Convert RGB to BGR
-    open_cv_image = open_cv_image[:, :, ::-1].copy()
+### Skills
+---
+  * Web development: **JavaScript**, JQuery, Bootstrap, Bulma (CSS framework)
+  * Programming: **Java**, C, C++, Golang, **NodeJS**
+  * Scripting: **Shell**, **Python**
+  * **Linux/Unix**
+  * Cloud service: AWS, Azure, **GCP** (Compute Engine, Cloud Storage, Logging, Container Registry)
+  * Database: Postgres, PgBouncer, Oracle
+  * Infrastructure as code (IaC) Tools: **Ansible**, **Terraform**, Salt, Vagrant, Puppet
+  * Tooling: **Container**, KVM, Jenkins, Jira, Bitbucket, GitLab, Confluence, Nexus/Nexus IQ, TeamCity, Splunk, Grafana, Prometheus, HAProxy etc.
 
-    cv2.imshow("cv2", open_cv_image)
+### Languages
+---
+  * Chinese (Mandarin)
+  * English
 
+### Projects
+---
+  * **Ora2pg (contributor)**: Move Atlassian products (Jira/Confluence/Bitbucket) backend db from Oracle to Postgres
+  <br>_Keywords: Java, Postgres, Oracle, Threading, Connection Pooling, Query optimization, Database Triggers, DB Migration, Data type conversion_
+  <br>_URL:_ <https://stash.hk.hsbc/projects/FXT/repos/oracle_to_pg/browse>
+  * **Notificaiton API (contributor)**: API used to check CR status and take care of Email/Symphony/Confluence/Flash notificaiton
+  <br>_Keywords: Clojure, Notification_
+  <br>_URL:_ <https://stash.hk.hsbc/projects/FXT/repos/bundle-scheduler/browse>
+  * **NoCI (contributor)**: Jenkins alternative. Internal CI/CD build server (Terraform/Maven/Rust/Ansible/Docker/Clojure/Golang/Node, etc.)
+  <br>_Keywords: CI/CD, Build server, Python_
+  <br>_URL:_ <https://stash.hk.hsbc/projects/FXT/repos/noci/browse>
+  * **Keepie (contributor)**: a tool for securely accessing secrets
+  <br>_Keywords: Secrets management, Python, Flask, Encryption, Password rotation_
+  <br>_URL:_ <https://stash.hk.hsbc/projects/FXT/repos/bundle-keepie/browse>
+  * **Tooling status page**: monitor/track upcoming maintanence and haproxy service status
+  <br>_Keywords: NodeJS, Bootstrap, GSD API, HAProxy_
+  * **Vulnerability scanner (server & client, contributor), Ticketeer**: Scan binaries from given path, check/report vulnerabilities (Backend: Nexus IQ) and track ticket status
+  <br>_Keywords: Java (client), NodeJS (server), Bootstrap, MongoDB, Nexus IQ, Jira_
+  <br>_URL:_ <https://stash.hk.hsbc/projects/FXT/repos/clouseau-ticketeer/browse>
+  * **Scheduler (contributor)**: Scheduler to run some jobs periodically: gcp key rotation, jira reindex, notificaiton, gcp vm rebuild, etc.
+  <br>_Keywords: Scheduler, Python_
+  * **Genesis & Utopia (contributor)**: an API driven application deployment tool to deploy apps into the machine on which it is running 
+  <br>_Keywords: Docker, Python, CI/CD_
+  <br>_URL:_ <https://stash.hk.hsbc/projects/FXT/repos/genesis/browse>
+  * **Automator (contributor)**: Process some jira service desk tickets automatically (add to Crowd groups, Jira project creation, TeamCity agent change requests)
+  <br>_Keywords: Jira webhooks, Python_
+  <br>_URL:_ <https://stash.hk.hsbc/projects/FXT/repos/batman-automation/browse>
+  * **GlusterFS manager**: manage GlusterFS cluster and setup nodes automatically
+  <br>_Keywords: GlusterFS, Python_ 
 
-def process(file, pos):
-    cv2.namedWindow("cv2", cv2.WINDOW_NORMAL)
-    
-    cv2.waitKey(5000)
-
-    with open(file, "rb") as f:
-        f.seek(block * (pos - 1))
-        byte = f.read(block)
-        # i start from 1
-        i = pos
-        cur_size = block * pos
-
-        while byte != b"":
-            # byte = bytes(i.to_bytes(10, "big") + bytearray(byte))
-            byte = bytes(struct.pack("i", i) + bytearray(byte))
-            display_qrc(binascii.b2a_hex(byte))
-
-            # fix decimal issue under python2
-            ratio = float(cur_size)/float(os.path.getsize(file))
-            if ratio > 1:
-                ratio = 1
-
-            print("seq: %s, ratio: %.2f" % (i, ratio))
-            k = cv2.waitKey(2000)
-
-            if k % 256 == 27:
-                # ESC pressed
-                print("Escape hit, closing...")
-                # break
-                sys.exit()
-
-            byte = f.read(block)
-            i += 1
-            cur_size += block
-
-    cv2.waitKey(5000)
-    # ask confirmation before displaying termination data
-    while True:
-        # for python2
-        # ans = raw_nput("last package. display termination data?")
-        ans = input("last package. display termination data?")
-        if ans not in ['y', 'Y', 'n', 'N']:
-            print("please enter y or n.")
-            continue
-        if ans == 'y' or ans == 'Y':
-            display_qrc(binascii.b2a_hex(bytes(struct.pack("i", 0))))
-            break
-        if ans == 'n' or ans == 'N':
-            break
-
-    cv2.waitKey(5000)
-    cv2.destroyAllWindows()
-
-
-if __name__ == '__main__':
-    process(sys.argv[1], int(sys.argv[2]))
+### Links
+---
+  * Confluence: <https://confluence.hk.hsbc/spaces/viewspace.action?key=~45020897>
+  * Bitbucket: <https://stash.hk.hsbc/plugins/servlet/user-contributions/45020897?view=summary>
